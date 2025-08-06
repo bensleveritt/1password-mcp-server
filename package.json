@@ -16,7 +16,7 @@
     "inspector": "npx @modelcontextprotocol/inspector build/index.js"
   },
   "dependencies": {
-    "@1password/op-js": "0.1.14-alpha.5",
+    "@1password/op-js": "0.1.13",
     "@modelcontextprotocol/sdk": "^1.17.0",
     "zod": "^3.22.0"
   },

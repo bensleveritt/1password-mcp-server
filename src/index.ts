@@ -2,9 +2,9 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { connect, validateCli, version } from "@1password/op-js";
+import { vault, item, validateCli, version } from "@1password/op-js";
 
-const vault = process.env.OP_VAULT;
+const userVault = process.env.OP_VAULT;
 
 const server = new McpServer({
   name: "basic-mcp-server",
@@ -30,49 +30,39 @@ server.registerTool(
   }
 );
 
-// // List items in vault
-// server.registerTool(
-//   "list-items",
-//   {
-//     title: "List Items",
-//     description: "List items in a 1Password vault",
-//   },
-//   async () => {
-//     if (!vault) {
-//       return {
-//         content: [
-//           {
-//             type: "text",
-//             text: "Vault hasn't been specified. To use this tool, set the OP_VAULT environment variable.",
-//           },
-//         ],
-//       };
-//     }
+// List items in vault
+server.registerTool(
+  "list-items",
+  {
+    title: "List Items",
+    description: "List items in a 1Password vault",
+  },
+  async () => {
+    if (!vault) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: "Vault hasn't been specified. To use this tool, set the OP_VAULT environment variable.",
+          },
+        ],
+      };
+    }
 
-//     validateCli();
+    validateCli();
 
-//     const hasAccess = connect;
-//     if (!hasAccess) {
-//       return {
-//         content: [
-//           {
-//             type: "text",
-//             text: `You don't have access to the vault "${vault}".`,
-//           },
-//         ],
-//       };
-//     }
+    const items = item.list({ vault: userVault });
 
-//     return {
-//       content: [
-//         {
-//           type: "text",
-//           text: `Items in vault "${vault}"`,
-//         },
-//       ],
-//     };
-//   }
-// );
+    return {
+      content: [
+        {
+          type: "text",
+          text: `There are ${items.length} items in the "${userVault}" vault`,
+        },
+      ],
+    };
+  }
+);
 
 async function main() {
   const transport = new StdioServerTransport();
