@@ -292,6 +292,68 @@ server.registerTool(
   }
 );
 
+// Archive secure note
+server.registerTool(
+  "archive-secure-note",
+  {
+    title: "Archive secure note",
+    description: "Archive a secure note in a 1Password vault",
+    inputSchema: {
+      noteName: z.string().describe("Name of the secure note to archive."),
+    },
+  },
+  async ({ noteName }) => {
+    if (!OP_VAULT) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: "Vault hasn't been specified. To use this tool, set the OP_VAULT environment variable.",
+          },
+        ],
+      };
+    }
+
+    if (!noteName) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: "Note name is required to archive the secure note.",
+          },
+        ],
+      };
+    }
+
+    validateCli();
+
+    try {
+      // Archive the secure note
+      item.delete(noteName, { vault: OP_VAULT, archive: true });
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Successfully archived secure note "${noteName}" in vault "${OP_VAULT}".`,
+          },
+        ],
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Failed to archive secure note "${noteName}": ${
+              error instanceof Error ? error.message : String(error)
+            }. Note may not exist.`,
+          },
+        ],
+      };
+    }
+  }
+);
+
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
