@@ -146,35 +146,86 @@ server.registerTool(
   }
 );
 
-// Edit secure note
+// Append to secure note
 server.registerTool(
-  "edit-secure-note",
+  "append-secure-note",
   {
-    title: "Edit Secure Note",
+    title: "Append to Secure Note",
     description:
-      "Edit the content of an existing secure note in a 1Password vault. Use the same note name that was used when creating or previously referencing the note.",
+      "Append content to an existing secure note in a 1Password vault. The new content will be added to the end of the existing content.",
     inputSchema: {
       noteName: z
         .string()
         .describe(
-          "Name of the secure note to edit. Must match the name used when creating the note."
+          "Name of the secure note to append to. Must match the name used when creating the note."
         ),
       content: z
         .string()
         .describe(
-          "New content for the secure note. This will replace the existing content."
+          "Content to append to the secure note. This will be added to the existing content."
         ),
     },
   },
   async ({ noteName, content }) => {
     if (!OP_VAULT) return vaultNotSpecified();
-    if (!noteName) return noteNameRequired("edit");
-    if (!content) return contentRequired("edit");
+    if (!noteName) return noteNameRequired("append");
+    if (!content) return contentRequired("append");
 
     validateCli();
 
     try {
-      // Edit the secure note with new content
+      // First get the existing content
+      const existingNote = item.get(noteName, {
+        vault: OP_VAULT,
+        fields: { label: ["notesPlain"] },
+      }) as ValueField;
+
+      // Append new content to existing content
+      const updatedContent = existingNote.value + "\n" + content;
+
+      // Update the note with combined content
+      item.edit(noteName, [["notesPlain", "concealed", updatedContent]], {
+        vault: OP_VAULT,
+      });
+
+      return success(
+        `Successfully appended content to secure note "${noteName}" in vault "${OP_VAULT}".`
+      );
+    } catch (error) {
+      return errorResponse("append", error as unknown as Error);
+    }
+  }
+);
+
+// Update secure note
+server.registerTool(
+  "update-secure-note",
+  {
+    title: "Update Secure Note",
+    description:
+      "Update the content of an existing secure note in a 1Password vault. This will replace all existing content with the new content.",
+    inputSchema: {
+      noteName: z
+        .string()
+        .describe(
+          "Name of the secure note to update. Must match the name used when creating the note."
+        ),
+      content: z
+        .string()
+        .describe(
+          "New content for the secure note. This will replace all existing content."
+        ),
+    },
+  },
+  async ({ noteName, content }) => {
+    if (!OP_VAULT) return vaultNotSpecified();
+    if (!noteName) return noteNameRequired("update");
+    if (!content) return contentRequired("update");
+
+    validateCli();
+
+    try {
+      // Update the secure note with new content (replaces existing)
       item.edit(noteName, [["notesPlain", "concealed", content]], {
         vault: OP_VAULT,
       });
@@ -183,7 +234,7 @@ server.registerTool(
         `Successfully updated secure note "${noteName}" in vault "${OP_VAULT}".`
       );
     } catch (error) {
-      return errorResponse("edit", error as unknown as Error);
+      return errorResponse("update", error as unknown as Error);
     }
   }
 );

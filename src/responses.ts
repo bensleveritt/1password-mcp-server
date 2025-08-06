@@ -1,6 +1,6 @@
 import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 
-type Action = "create" | "get" | "edit" | "archive";
+type Action = "create" | "get" | "append" | "update" | "archive";
 
 export function vaultNotSpecified(): CallToolResult {
   return {
