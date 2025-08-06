@@ -10,6 +10,14 @@ import {
   ValueField,
 } from "@1password/op-js";
 import { z } from "zod";
+import {
+  vaultNotSpecified,
+  noteNameRequired,
+  noteMayNotExist,
+  success,
+  contentRequired,
+  errorResponse,
+} from "./responses.js";
 
 const OP_VAULT = process.env.OP_VAULT;
 
@@ -47,33 +55,19 @@ server.registerTool(
     description: "List secure notes in a 1Password vault",
   },
   async () => {
-    if (!vault) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: "Vault hasn't been specified. To use this tool, set the OP_VAULT environment variable.",
-          },
-        ],
-      };
-    }
+    if (!vault) return vaultNotSpecified();
 
     validateCli();
 
     const items = item.list({ vault: OP_VAULT });
 
-    return {
-      content: [
-        {
-          type: "text",
-          text: `There are ${
-            items.length
-          } secure notes in the "${OP_VAULT}" vault: \n\n- ${items
-            .map((item) => item.title)
-            .join("\n- ")}`,
-        },
-      ],
-    };
+    return success(
+      `There are ${
+        items.length
+      } secure notes in the "${OP_VAULT}" vault: \n\n- ${items
+        .map((item) => item.title)
+        .join("\n- ")}`
+    );
   }
 );
 
@@ -93,27 +87,9 @@ server.registerTool(
     },
   },
   async ({ noteName }) => {
-    if (!OP_VAULT) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: "Vault hasn't been specified. To use this tool, set the OP_VAULT environment variable.",
-          },
-        ],
-      };
-    }
+    if (!OP_VAULT) return vaultNotSpecified();
 
-    if (!noteName) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: "Note name is required. Please specify the name of the secure note to retrieve.",
-          },
-        ],
-      };
-    }
+    if (!noteName) return noteNameRequired("get");
 
     validateCli();
 
@@ -123,25 +99,9 @@ server.registerTool(
         fields: { label: ["notesPlain"] },
       }) as ValueField;
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Retrieved secure note "${noteName}":\n\n${note.value}`,
-          },
-        ],
-      };
+      return success(`Retrieved secure note "${noteName}":\n\n${note.value}`);
     } catch (error) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Failed to retrieve secure note "${noteName}": ${
-              error instanceof Error ? error.message : String(error)
-            }. Note may not exist - consider creating it first.`,
-          },
-        ],
-      };
+      return noteMayNotExist();
     }
   }
 );
@@ -163,27 +123,9 @@ server.registerTool(
     },
   },
   async ({ noteName, content }) => {
-    if (!OP_VAULT) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: "Vault hasn't been specified. To use this tool, set the OP_VAULT environment variable.",
-          },
-        ],
-      };
-    }
-
-    if (!noteName || !content) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: "Both note name and content are required to create a secure note.",
-          },
-        ],
-      };
-    }
+    if (!OP_VAULT) return vaultNotSpecified();
+    if (!noteName) return noteNameRequired("create");
+    if (!content) return contentRequired("create");
 
     validateCli();
 
@@ -195,25 +137,11 @@ server.registerTool(
         vault: OP_VAULT,
       });
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Successfully created secure note "${noteName}" in vault "${OP_VAULT}". Remember to use this exact name ("${noteName}") for future operations on this note.`,
-          },
-        ],
-      };
+      return success(
+        `Successfully created secure note "${noteName}" in vault "${OP_VAULT}". Remember to use this exact name ("${noteName}") for future operations on this note.`
+      );
     } catch (error) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Failed to create secure note "${noteName}": ${
-              error instanceof Error ? error.message : String(error)
-            }`,
-          },
-        ],
-      };
+      return errorResponse("create", error as unknown as Error);
     }
   }
 );
@@ -239,27 +167,9 @@ server.registerTool(
     },
   },
   async ({ noteName, content }) => {
-    if (!OP_VAULT) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: "Vault hasn't been specified. To use this tool, set the OP_VAULT environment variable.",
-          },
-        ],
-      };
-    }
-
-    if (!noteName || !content) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: "Both note name and content are required to edit the secure note.",
-          },
-        ],
-      };
-    }
+    if (!OP_VAULT) return vaultNotSpecified();
+    if (!noteName) return noteNameRequired("edit");
+    if (!content) return contentRequired("edit");
 
     validateCli();
 
@@ -269,25 +179,11 @@ server.registerTool(
         vault: OP_VAULT,
       });
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Successfully updated secure note "${noteName}" in vault "${OP_VAULT}".`,
-          },
-        ],
-      };
+      return success(
+        `Successfully updated secure note "${noteName}" in vault "${OP_VAULT}".`
+      );
     } catch (error) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Failed to edit secure note "${noteName}": ${
-              error instanceof Error ? error.message : String(error)
-            }. Note may not exist - consider creating it first.`,
-          },
-        ],
-      };
+      return errorResponse("edit", error as unknown as Error);
     }
   }
 );
@@ -303,27 +199,8 @@ server.registerTool(
     },
   },
   async ({ noteName }) => {
-    if (!OP_VAULT) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: "Vault hasn't been specified. To use this tool, set the OP_VAULT environment variable.",
-          },
-        ],
-      };
-    }
-
-    if (!noteName) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: "Note name is required to archive the secure note.",
-          },
-        ],
-      };
-    }
+    if (!OP_VAULT) return vaultNotSpecified();
+    if (!noteName) return noteNameRequired("archive");
 
     validateCli();
 
@@ -331,25 +208,11 @@ server.registerTool(
       // Archive the secure note
       item.delete(noteName, { vault: OP_VAULT, archive: true });
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Successfully archived secure note "${noteName}" in vault "${OP_VAULT}".`,
-          },
-        ],
-      };
+      return success(
+        `Successfully archived secure note "${noteName}" in vault "${OP_VAULT}".`
+      );
     } catch (error) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Failed to archive secure note "${noteName}": ${
-              error instanceof Error ? error.message : String(error)
-            }. Note may not exist.`,
-          },
-        ],
-      };
+      return errorResponse("archive", error as unknown as Error);
     }
   }
 );
