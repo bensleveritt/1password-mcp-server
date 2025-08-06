@@ -3,51 +3,51 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
+import { checkVaultAccess } from "./op.js";
+
+const vault = process.env.OP_VAULT;
 
 const server = new McpServer({
   name: "basic-mcp-server",
   version: "1.0.0",
 });
 
-// Simple hello tool - no external dependencies
+// List items in vault
 server.registerTool(
-  "say-hello",
+  "list-items",
   {
-    title: "Say Hello",
-    description: "Returns a greeting message",
-    inputSchema: {
-      name: z.string().describe("Name to greet")
-    },
+    title: "List Items",
+    description: "List items in a 1Password vault",
   },
-  async ({ name }) => {
-    return {
-      content: [
-        {
-          type: "text",
-          text: `Hello, ${name}! This is working.`,
-        },
-      ],
-    };
-  }
-);
+  async () => {
+    if (!vault) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: "Vault hasn't been specified. To use this tool, set the OP_VAULT environment variable.",
+          },
+        ],
+      };
+    }
 
-// Simple math tool - no external dependencies  
-server.registerTool(
-  "add-numbers",
-  {
-    title: "Add Numbers",
-    description: "Adds two numbers together",
-    inputSchema: {
-      a: z.number().describe("First number"),
-      b: z.number().describe("Second number")
-    },
-  },
-  async ({ a, b }) => {
+    const hasAccess = checkVaultAccess(vault);
+    if (!hasAccess) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `You don't have access to the vault "${vault}".`,
+          },
+        ],
+      };
+    }
+
     return {
       content: [
         {
           type: "text",
-          text: `${a} + ${b} = ${a + b}`,
+          text: `Items in vault "${vault}"`,
         },
       ],
     };
@@ -57,7 +57,7 @@ server.registerTool(
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error("Basic MCP Server running on stdio");
+  console.log("1Password MCP Server running on stdio");
 }
 
 main().catch((error) => {
