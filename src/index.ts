@@ -9,6 +9,7 @@ import {
   version,
   ValueField,
 } from "@1password/op-js";
+import { z } from "zod";
 
 const OP_VAULT = process.env.OP_VAULT;
 const OP_NOTE_NAME = "Private Chat Note";
@@ -105,6 +106,70 @@ server.registerTool(
         },
       ],
     };
+  }
+);
+
+// Edit secure note
+server.registerTool(
+  "edit-secure-note",
+  {
+    title: "Edit Secure Note",
+    description: "Edit the content of a secure note in a 1Password vault",
+    inputSchema: {
+      content: z.string(),
+    },
+  },
+  async ({ content }) => {
+    if (!OP_VAULT || !OP_NOTE_NAME) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: "Vault hasn't been specified. To use this tool, set the OP_VAULT environment variable.",
+          },
+        ],
+      };
+    }
+
+    if (!content) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: "Content is required to edit the secure note.",
+          },
+        ],
+      };
+    }
+
+    validateCli();
+
+    try {
+      // Edit the secure note with new content
+      item.edit(OP_NOTE_NAME, [["notesPlain", "concealed", content]], {
+        vault: OP_VAULT,
+      });
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Successfully updated secure note "${OP_NOTE_NAME}" in vault "${OP_VAULT}".`,
+          },
+        ],
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Failed to edit secure note: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
+          },
+        ],
+      };
+    }
   }
 );
 
