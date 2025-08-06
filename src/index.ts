@@ -2,8 +2,7 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { z } from "zod";
-import { checkVaultAccess } from "./op.js";
+import { connect, validateCli, version } from "@1password/op-js";
 
 const vault = process.env.OP_VAULT;
 
@@ -12,47 +11,68 @@ const server = new McpServer({
   version: "1.0.0",
 });
 
-// List items in vault
+// List version of `op`
 server.registerTool(
-  "list-items",
+  "op-version",
   {
-    title: "List Items",
-    description: "List items in a 1Password vault",
+    title: "1Passwordd CLI Version",
+    description: "List version of `op`",
   },
   async () => {
-    if (!vault) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: "Vault hasn't been specified. To use this tool, set the OP_VAULT environment variable.",
-          },
-        ],
-      };
-    }
-
-    const hasAccess = checkVaultAccess(vault);
-    if (!hasAccess) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: `You don't have access to the vault "${vault}".`,
-          },
-        ],
-      };
-    }
-
     return {
       content: [
         {
           type: "text",
-          text: `Items in vault "${vault}"`,
+          text: `\`op\` version: ${version()}`,
         },
       ],
     };
   }
 );
+
+// // List items in vault
+// server.registerTool(
+//   "list-items",
+//   {
+//     title: "List Items",
+//     description: "List items in a 1Password vault",
+//   },
+//   async () => {
+//     if (!vault) {
+//       return {
+//         content: [
+//           {
+//             type: "text",
+//             text: "Vault hasn't been specified. To use this tool, set the OP_VAULT environment variable.",
+//           },
+//         ],
+//       };
+//     }
+
+//     validateCli();
+
+//     const hasAccess = connect;
+//     if (!hasAccess) {
+//       return {
+//         content: [
+//           {
+//             type: "text",
+//             text: `You don't have access to the vault "${vault}".`,
+//           },
+//         ],
+//       };
+//     }
+
+//     return {
+//       content: [
+//         {
+//           type: "text",
+//           text: `Items in vault "${vault}"`,
+//         },
+//       ],
+//     };
+//   }
+// );
 
 async function main() {
   const transport = new StdioServerTransport();
