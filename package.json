@@ -1,0 +1,26 @@
+{
+  "name": "1password-mcp-server",
+  "version": "1.0.0",
+  "description": "MCP Server for 1Password CLI integration",
+  "type": "module",
+  "bin": {
+    "1password-mcp-server": "./build/index.js"
+  },
+  "files": [
+    "build"
+  ],
+  "scripts": {
+    "build": "tsc && chmod +x build/index.js",
+    "dev": "tsc --watch",
+    "start": "node build/index.js",
+    "inspector": "npx @modelcontextprotocol/inspector build/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.17.0",
+    "zod": "^3.22.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.14",
+    "typescript": "^5.9.2"
+  }
+}
